@@ -1,0 +1,75 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  ADDON_DIR: eufy-security-ws
+
+jobs:
+  metadata:
+    name: Metadata and release artifact
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Install YAML validator
+        run: python3 -m pip install --disable-pip-version-check PyYAML==6.0.3
+
+      - name: Validate metadata and checksum
+        run: python3 script/validate_release.py
+
+      - name: Validate shell syntax
+        run: |
+          bash -n "$ADDON_DIR/run.sh"
+          bash -n script/cut-release.sh
+
+  build:
+    name: Build ${{ matrix.arch }}
+    needs: metadata
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            os: ubuntu-24.04
+          - arch: aarch64
+            os: ubuntu-24.04-arm
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Read add-on build config
+        id: cfg
+        shell: bash
+        run: |
+          base="$(awk '/^[[:space:]]+${{ matrix.arch }}:/ {print $2; exit}' "$ADDON_DIR/build.yaml")"
+          url="$(awk '/EUFY_SECURITY_WS_PACKAGE_URL:/ {print $2; exit}' "$ADDON_DIR/build.yaml")"
+          sha="$(awk '/EUFY_SECURITY_WS_PACKAGE_SHA256:/ {print $2; exit}' "$ADDON_DIR/build.yaml")"
+          ver="$(awk '/^version:/ {print $2; exit}' "$ADDON_DIR/config.yaml" | tr -d '\"')"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        uses: home-assistant/builder/actions/build-image@4de35182ce1e329181bffcbcc84d33db5e2c7e10 # 2026.06.0
+        with:
+          arch: ${{ matrix.arch }}
+          context: ${{ env.ADDON_DIR }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image: ghcr.io/${{ github.repository_owner }}/${{ matrix.arch }}-eufy-security-ws
+          image-tags: validation
+          version: ${{ steps.cfg.outputs.ver }}
+          push: "false"
+          cosign: "false"
+          build-args: |
+            BUILD_FROM=${{ steps.cfg.outputs.base }}
+            EUFY_SECURITY_WS_PACKAGE_URL=${{ steps.cfg.outputs.url }}
+            EUFY_SECURITY_WS_PACKAGE_SHA256=${{ steps.cfg.outputs.sha }}
