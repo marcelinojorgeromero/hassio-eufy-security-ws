@@ -35,25 +35,25 @@ if bashio::config.has_value 'trusted_device_name'; then
     TRUSTED_DEVICE_NAME_JQ="trustedDeviceName: \$trusted_device_name,"
 fi
 
-STATION_IP_ADDRESSES_ARG=""
+STATION_IP_ADDRESSES_ARGS=()
 STATION_IP_ADDRESSES_JQ=""
+STATION_IP_ADDRESSES_JSON='{}'
 if bashio::config.has_value 'stations'; then
     while read -r data
     do
-        TMP_DATA=($(echo "${data}" | tr -d "{}\"[:blank:]" | tr "," " " | sed 's/serial_number://g;s/ip_address://g'))
-        if [ "$STATION_IP_ADDRESSES_ARG" = "" ]; then
-            STATION_IP_ADDRESSES_ARG="--arg ${TMP_DATA[0]} ${TMP_DATA[1]}"
-            STATION_IP_ADDRESSES_JQ="stationIPAddresses: { \$${TMP_DATA[0]}"
-        else
-            STATION_IP_ADDRESSES_ARG="$STATION_IP_ADDRESSES_ARG --arg ${TMP_DATA[0]} ${TMP_DATA[1]}"
-            STATION_IP_ADDRESSES_JQ="$STATION_IP_ADDRESSES_JQ, \$${TMP_DATA[0]}"
+        SERIAL_NUMBER="$(printf '%s' "${data}" | jq -r '.serial_number // empty')"
+        IP_ADDRESS="$(printf '%s' "${data}" | jq -r '.ip_address // empty')"
+        if [ -n "$SERIAL_NUMBER" ] && [ -n "$IP_ADDRESS" ]; then
+            STATION_IP_ADDRESSES_JSON="$(
+                printf '%s' "$STATION_IP_ADDRESSES_JSON" |
+                    jq --arg serial "$SERIAL_NUMBER" --arg ip "$IP_ADDRESS" '. + {($serial): $ip}'
+            )"
         fi
     done <<<"$(bashio::config 'stations')"
-    if [ "$STATION_IP_ADDRESSES_ARG" != "" ]; then
-        STATION_IP_ADDRESSES_JQ="$STATION_IP_ADDRESSES_JQ }"
+    if [ "$STATION_IP_ADDRESSES_JSON" != "{}" ]; then
+        STATION_IP_ADDRESSES_ARGS=(--argjson station_ip_addresses "$STATION_IP_ADDRESSES_JSON")
+        STATION_IP_ADDRESSES_JQ="stationIPAddresses: \$station_ip_addresses"
     fi
-    #bashio::log.info "STATION_IP_ADDRESSES_JQ: ${STATION_IP_ADDRESSES_JQ}"
-    #bashio::log.info "STATION_IP_ADDRESSES_ARG: ${STATION_IP_ADDRESSES_ARG}"
 fi
 
 PORT_OPTION=""
@@ -79,7 +79,7 @@ JSON_STRING="$( jq -n \
   --arg polling_interval_minutes "$POLLING_INTERVAL_MINUTES" \
   --arg trusted_device_name "$TRUSTED_DEVICE_NAME" \
   --arg accept_invitations "$ACCEPT_INVITATIONS" \
-  $STATION_IP_ADDRESSES_ARG \
+  "${STATION_IP_ADDRESSES_ARGS[@]}" \
     "{
       username: \$username,
       password: \$password,
