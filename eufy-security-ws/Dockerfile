@@ -1,7 +1,8 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-ARG EUFY_SECURITY_WS_VERSION
+ARG EUFY_SECURITY_WS_PACKAGE_URL
+ARG EUFY_SECURITY_WS_PACKAGE_SHA256
 
 WORKDIR /usr/src/app
 RUN \
@@ -15,8 +16,10 @@ RUN \
     && node --version \
     # Fail the build if the base ever regresses below Node 24.
     && case "$(node --version)" in v24.*) ;; *) echo "Expected Node 24, got $(node --version)" >&2; exit 1 ;; esac \
-    && npm install --force \
-    "eufy-security-ws@${EUFY_SECURITY_WS_VERSION}"
+    && wget -O /tmp/eufy-security-ws.tgz "${EUFY_SECURITY_WS_PACKAGE_URL}" \
+    && echo "${EUFY_SECURITY_WS_PACKAGE_SHA256}  /tmp/eufy-security-ws.tgz" | sha256sum -c - \
+    && npm install --force /tmp/eufy-security-ws.tgz \
+    && rm -f /tmp/eufy-security-ws.tgz
 
 COPY run.sh /
 RUN chmod a+x /run.sh
