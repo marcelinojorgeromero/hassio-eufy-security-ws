@@ -1,3 +1,10 @@
+## 3.1.0-compat.2
+
+- Updated the compatibility WebSocket server to `3.1.0-compat.2`.
+- Added stale Mega push identity recovery and privacy-safe Mega logging.
+- Updated runtime dependencies and cleared production audit findings.
+- Added checksum, multi-architecture build, and release image validation.
+
 ## 1.9.7
 - Updated eufy-security-ws to version [`1.9.7`](https://github.com/bropat/eufy-security-ws/releases/tag/1.9.7)
 
