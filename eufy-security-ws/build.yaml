@@ -9,5 +9,5 @@ codenotary:
   #signer: patrick.broetto@gmail.com
   base_image: notary@home-assistant.io
 args:
-  EUFY_SECURITY_WS_PACKAGE_URL: https://github.com/marcelinojorgeromero/eufy-security-ws/releases/download/v3.1.0-compat.2/eufy-security-ws-3.1.0-compat.2.tgz
-  EUFY_SECURITY_WS_PACKAGE_SHA256: b1c872693f95c912b88346e3cda248e43156a063a3293cd254b3f07fa28cf8fd
+  EUFY_SECURITY_WS_PACKAGE_URL: https://github.com/marcelinojorgeromero/eufy-security-ws/releases/download/v3.1.0-compat.3/eufy-security-ws-3.1.0-compat.3.tgz
+  EUFY_SECURITY_WS_PACKAGE_SHA256: ebd8148d72a71e6d5d5f9c6df6abe91e934c9d4d3c45181c9823102c6525cee8
