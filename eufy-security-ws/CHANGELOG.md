@@ -1,3 +1,10 @@
+## 3.1.0-compat.3
+
+- Updated the compatibility WebSocket server to `3.1.0-compat.3`.
+- Added geometry-aware decoding for database, large, and combined images.
+- Hardened malformed WebSocket message handling without logging sensitive payloads.
+- Improved cross-platform build, test, lint, and packaging reliability.
+
 ## 3.1.0-compat.2
 
 - Updated the compatibility WebSocket server to `3.1.0-compat.2`.

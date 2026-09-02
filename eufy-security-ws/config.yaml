@@ -1,6 +1,6 @@
 name: Eufy Security WS Compatibility
 description: Temporary compatibility build for existing Eufy Home Assistant installations
-version: 3.1.0-compat.2
+version: 3.1.0-compat.3
 slug: "eufy_security_ws_compat"
 url: https://github.com/marcelinojorgeromero/hassio-eufy-security-ws
 image: "ghcr.io/marcelinojorgeromero/eufy-security-ws"
